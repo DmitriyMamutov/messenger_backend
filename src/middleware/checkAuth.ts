@@ -2,11 +2,9 @@ import express from "express"
 import { verifyJWT } from '../utils'
 import { IUser } from '../models/User'
 
-
 export default (req: any, res:any, next:any) => {
-  
-  if(req.path !== '/user/login'){
-    
+  if(req.path === '/user/login' || req.path ==='/user/registration'){
+    return next()
   }
   
   const token = req.headers.token

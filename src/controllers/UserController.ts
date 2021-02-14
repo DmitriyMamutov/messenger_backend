@@ -1,7 +1,9 @@
 import express from "express"
 import { UserModel } from '../models'
-import { createJWT } from '../utils'
+import { createJWT, generatePasswordHash } from '../utils'
 import { IUser } from './../models/User';
+import { validationResult } from 'express-validator';
+import bcrypt from 'bcrypt';
 
 class UserController {
   show(req: express.Request, res: express.Response) {
@@ -32,7 +34,7 @@ class UserController {
 
   delete(req: express.Request, res: express.Response) {
     const id: string = req.params.id
-    UserModel.findByIdAndRemove({ _id: id })
+    UserModel.findOneAndRemove({ _id: id })
       .then(user => {
         if (user) {
           res.json({
@@ -49,28 +51,33 @@ class UserController {
 
   login(req: express.Request, res: express.Response) {
     const postData = {
-      email: req.body.login,
+      email: req.body.email,
       password: req.body.password
     }
 
-    UserModel.findOne({ email: postData.email }, (err: any, user: IUser) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({ errors: errors.array() });
+    }
+
+    UserModel.findOne({ email: postData.email }, (err: any, user: any) => {
       if (err) {
         return res.status(404).json({
           message: 'User not Found'
         })
       }
 
-      if (user.password === postData.password) {
-        const token = createJWT(user)
+      if (bcrypt.compareSync(postData.password, user.password)) {
+        const token = createJWT(user);
         res.json({
           status: 'success',
-          token
-       })
-      }else{
+          token,
+        });
+      } else {
         res.json({
           status: 'error',
-          message: 'Incorrect status or email'
-       })
+          message: 'Incorrect password or email',
+        });
       }
     })
   }

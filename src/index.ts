@@ -2,6 +2,7 @@ import express from 'express'
 import mongoose from "mongoose"
 import {UserController, DialogController, MessageController} from './controllers';
 import {updateLastSeen, checkAuth} from './middleware'
+import {loginValidation} from './validations';
 import dotenv from 'dotenv'
 
 const app = express()
@@ -28,7 +29,7 @@ mongoose.connect(URL, {
 app.get('/user/:id', User.show);
 app.delete('/user/:id', User.delete);
 app.post('/user/registration', User.create); 
-app.post('/user/login', User.login); 
+app.post('/user/login', loginValidation, User.login); 
 
 
 app.get('/dialogs', Dialog.index); 
